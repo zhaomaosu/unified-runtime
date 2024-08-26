@@ -1329,39 +1329,6 @@ __urdlllocal ur_result_t UR_APICALL urKernelSetArgLocal(
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-/// @brief Intercept function for urKernelSetArgPointer
-__urdlllocal ur_result_t UR_APICALL urKernelSetArgPointer(
-    ur_kernel_handle_t hKernel, ///< [in] handle of the kernel object
-    uint32_t argIndex, ///< [in] argument index in range [0, num args - 1]
-    const ur_kernel_arg_pointer_properties_t
-        *pProperties, ///< [in][optional] pointer to USM pointer properties.
-    const void *
-        pArgValue ///< [in][optional] Pointer obtained by USM allocation or virtual memory
-    ///< mapping operation. If null then argument value is considered null.
-) {
-    auto pfnSetArgPointer = getContext()->urDdiTable.Kernel.pfnSetArgPointer;
-
-    if (nullptr == pfnSetArgPointer) {
-        return UR_RESULT_ERROR_UNSUPPORTED_FEATURE;
-    }
-
-    getContext()->logger.debug(
-        "==== urKernelSetArgPointer (argIndex={}, pArgValue={})", argIndex,
-        pArgValue);
-
-    if (Options(getContext()->logger).DetectKernelArguments) {
-        auto KI = getContext()->interceptor->getKernelInfo(hKernel);
-        std::scoped_lock<ur_shared_mutex> Guard(KI->Mutex);
-        KI->PointerArgs[argIndex] = {pArgValue, GetCurrentBacktrace()};
-    }
-
-    ur_result_t result =
-        pfnSetArgPointer(hKernel, argIndex, pProperties, pArgValue);
-
-    return result;
-}
-
-///////////////////////////////////////////////////////////////////////////////
 /// @brief Exported function for filling application's Global table
 ///        with current process' addresses
 ///
